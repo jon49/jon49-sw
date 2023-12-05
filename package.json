@@ -1,0 +1,20 @@
+{
+  "name": "@jon49/sw",
+  "version": "0.0.0",
+  "description": "Packages for MVC service workers.",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "./tasks/build.sh"
+  },
+  "keywords": [
+    "service-worker",
+    "MVC"
+  ],
+  "author": "Jon Nyman",
+  "license": "ISC",
+  "devDependencies": {
+    "esbuild": "^0.19.8",
+    "typescript": "^5.3.2"
+  }
+}
