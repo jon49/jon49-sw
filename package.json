@@ -1,11 +1,10 @@
 {
   "name": "@jon49/sw",
-  "version": "0.0.0",
+  "version": "0.0.2",
   "description": "Packages for MVC service workers.",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "./tasks/build.sh"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "service-worker",
@@ -16,5 +15,13 @@
   "devDependencies": {
     "esbuild": "^0.19.8",
     "typescript": "^5.3.2"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jon49/jon49-sw.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jon49/jon49-sw/issues"
+  },
+  "homepage": "https://github.com/jon49/jon49-sw#readme"
 }
