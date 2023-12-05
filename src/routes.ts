@@ -20,17 +20,10 @@ interface ResponseOptions {
     handleErrors?: Function
     version?: string
     links?: { url: string, file: string }[]
+    routes?: Route[]
 }
 
 export let options: ResponseOptions = {}
-
-let routes : Route[] = []
-
-export function addRoutes(routesList: Route[]) {
-    routes = routesList
-}
-
-export type AddRoutes = typeof addRoutes
 
 // Test if value is Async Generator
 let isHtml = (value: any) =>
@@ -93,7 +86,7 @@ function isMethod(method: unknown) {
 export function findRoute(url: URL, method: unknown) {
     let validMethod : MethodTypes = isMethod(method)
     if (validMethod) {
-        for (const r of routes) {
+        for (const r of options.routes ?? []) {
             if (r[validMethod]
                 && (r.route instanceof RegExp && r.route.test(url.pathname)
                     || (r.route instanceof Function && r.route(url)))) {
