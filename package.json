@@ -1,12 +1,13 @@
 {
   "name": "@jon49/sw",
-  "version": "0.0.5",
+  "version": "0.1.0",
   "description": "Packages for MVC service workers.",
   "type": "module",
   "files": ["lib"],
   "exports": {
-      "./routes": "./lib/routes.ts",
-      "./new-app-notifier": "./lib/new-app-notifier.ts"
+      "./routes.js": "./lib/routes.ts",
+      "./new-app-notifier.js": "./lib/new-app-notifier.ts",
+      "./validation.js": "./lib/validation.ts"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
