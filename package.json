@@ -1,8 +1,12 @@
 {
   "name": "@jon49/sw",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Packages for MVC service workers.",
   "type": "module",
+  "files": ["lib"],
+  "exports": {
+    "./lib/*": "./lib/*.*"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
