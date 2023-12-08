@@ -75,6 +75,13 @@ export const maybe =
     (val: T | undefined) =>
         !val ? Promise.resolve(undefined) : f(val)
 
+export const createDateString =
+    (name: string) =>
+    (val: string | undefined) : Promise<string> =>
+        /\d{4}-[01]\d-[0123]\d/.test(val ?? "")
+            ? Promise.resolve(<string>val)
+        : reject(`'${name}' must be a valid date string. But was given '${val}'.`)
+
 export const createDateTimeString =
     (name: string) =>
     (val: string | undefined) : Promise<string> => {
