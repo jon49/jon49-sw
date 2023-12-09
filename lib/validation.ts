@@ -45,11 +45,18 @@ export async function createNumber(name: string, val: number | string) : Promise
     return num
 }
 
-export function createPositiveWholeNumber(name: string) : (val: number | string | undefined | null) => Promise<number> {
-    return async (val: number | string | undefined | null) => {
+export function createPositiveNumber(name: string) {
+    return async function (val: number | string | undefined | null) {
         if (val == null) return reject(`'${name}' is required.`)
         let num = await createNumber(name, val)
         if (num < 0) return reject(`'${name}' must be 0 or greater. But was given '${val}'.`)
+        return num
+    }
+}
+
+export function createPositiveWholeNumber(name: string) : (val: number | string | undefined | null) => Promise<number> {
+    return async (val: number | string | undefined | null) => {
+        let num = await createPositiveNumber(name)(val)
         if (!isInteger(num)) return reject(`${name} must be a whole number. But was given '${num}' and was expecting '${num|0}'.`)
         return num
     }
@@ -81,6 +88,13 @@ export const createDateString =
         /\d{4}-[01]\d-[0123]\d/.test(val ?? "")
             ? Promise.resolve(<string>val)
         : reject(`'${name}' must be a valid date string. But was given '${val}'.`)
+
+export const createTimeString =
+    (name: string) =>
+    (val: string | undefined) : Promise<string> =>
+        /\d{2}:\d{2}/.test(val ?? "")
+            ? Promise.resolve(<string>val)
+        : reject(`'${name}' must be a valid time string. But was given '${val}'.`)
 
 export const createDateTimeString =
     (name: string) =>
