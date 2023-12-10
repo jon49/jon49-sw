@@ -31,6 +31,7 @@ let isHtml = (value: any) =>
     && value.throw instanceof Function
 
 
+// @ts-ignore
 export async function getResponse(event: FetchEvent): Promise<Response>  {
     try {
         const req : Request = event.request
@@ -100,6 +101,7 @@ export function findRoute(url: URL, method: unknown) {
 interface ExectuteHandlerOptions {
     url: URL
     req: Request
+    // @ts-ignore
     event: FetchEvent
 }
 async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Promise<Response> {
@@ -108,7 +110,7 @@ async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Pro
     if (!isPost && !url.pathname.endsWith("/")) return cacheResponse(url.pathname, event)
 
     let handlers =
-        <RoutePost | PostHandlers | null>
+        <RouteHandler<RouteGetArgs | RoutePostArgs> | null>
         findRoute(url, method)
 
     // @ts-ignore
@@ -255,19 +257,9 @@ function isFile(s: string) {
     return s.lastIndexOf("/") < s.lastIndexOf(".")
 }
 
-export type PostHandlers = Record<string, (o: RoutePostArgs) => Promise<any>>
-
 export interface RouteGetArgs {
     req: Request
     query: any
-}
-
-export interface RouteGet {
-    (request: RouteGetArgs): Promise<AsyncGenerator> | AsyncGenerator | Promise<Response>
-}
-
-export interface RouteGetHandler {
-    [handler: string]: RouteGet
 }
 
 export interface RoutePostArgs {
@@ -275,12 +267,28 @@ export interface RoutePostArgs {
     data: any
     req: Request 
 }
-export interface RoutePost {
-    (options: RoutePostArgs): Promise<AsyncGenerator> | Promise<Response>
+
+export interface  RouteObjectReturn {
+    body: string | AsyncGenerator
+    status?: number
+    headers?: any
+    events?: any
+    message?: string
+    messages?: string[]
 }
+
+export interface RouteHandler<T> {
+    (options: T):
+        Promise<AsyncGenerator>
+        | Promise<Response>
+        | RouteObjectReturn
+        | undefined
+        | null
+}
+
 export interface Route {
     route: RegExp | ((a: URL) => boolean)
-    get?: RouteGet | RouteGetHandler
-    post?: RoutePost | PostHandlers
+    get?: RouteHandler<RouteGetArgs> | Record<string, RouteHandler<RouteGetArgs>>
+    post?: RouteHandler<RoutePostArgs> | Record<string, RouteHandler<RoutePostArgs>>
 }
 
