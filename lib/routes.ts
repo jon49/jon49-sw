@@ -181,7 +181,10 @@ async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Pro
         }
     }
 
-    return redirect(req)
+    return new Response(null, {
+        status: 404,
+        headers: htmfHeader(req, {}, ["Not Found!"])
+    })
 }
 
 async function getData(req: Request) {
@@ -269,7 +272,7 @@ export interface RoutePostArgs {
 }
 
 export interface  RouteObjectReturn {
-    body?: string | AsyncGenerator
+    body?: string | AsyncGenerator | null
     status?: number
     headers?: any
     events?: any
