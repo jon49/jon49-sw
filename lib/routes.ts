@@ -269,7 +269,7 @@ export interface RoutePostArgs {
 }
 
 export interface  RouteObjectReturn {
-    body: string | AsyncGenerator
+    body?: string | AsyncGenerator
     status?: number
     headers?: any
     events?: any
