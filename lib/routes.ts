@@ -283,7 +283,8 @@ export interface RouteHandler<T> {
         | Response
         | RouteObjectReturn
         | undefined
-        | null>
+        | null
+        | void >
 }
 
 export interface RoutePostHandler {
@@ -296,7 +297,7 @@ export interface RouteGetHandler {
 
 export interface Route {
     route: RegExp | ((a: URL) => boolean)
-    get?: RouteHandler<RouteGetArgs> | Record<string, RouteHandler<RouteGetArgs>>
+    get?: RouteHandler<RouteGetArgs> | RouteGetHandler
     post?: RouteHandler<RoutePostArgs> | RoutePostHandler
 }
 
