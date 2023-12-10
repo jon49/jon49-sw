@@ -278,17 +278,25 @@ export interface  RouteObjectReturn {
 }
 
 export interface RouteHandler<T> {
-    (options: T):
-        Promise<AsyncGenerator>
-        | Promise<Response>
+    (options: T): Promise<
+        AsyncGenerator
+        | Response
         | RouteObjectReturn
         | undefined
-        | null
+        | null>
+}
+
+export interface RoutePostHandler {
+    [handler: string]: RouteHandler<RoutePostArgs>
+}
+
+export interface RouteGetHandler {
+    [handler: string]: RouteHandler<RouteGetArgs>
 }
 
 export interface Route {
     route: RegExp | ((a: URL) => boolean)
     get?: RouteHandler<RouteGetArgs> | Record<string, RouteHandler<RouteGetArgs>>
-    post?: RouteHandler<RoutePostArgs> | Record<string, RouteHandler<RoutePostArgs>>
+    post?: RouteHandler<RoutePostArgs> | RoutePostHandler
 }
 
