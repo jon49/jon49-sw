@@ -30,7 +30,6 @@ let isHtml = (value: any) =>
     value?.next instanceof Function
     && value.throw instanceof Function
 
-
 // @ts-ignore
 export async function getResponse(event: FetchEvent): Promise<Response>  {
     try {
@@ -155,12 +154,21 @@ async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Pro
                 ...result.headers
             }
 
-            return isHtml(result.body)
-                ? streamResponse(result)
-            : new Response(result.body, {
-                    status: result.status ?? 200,
-                    headers: result.headers
-                })
+            if (isHtml(result.body)) {
+                return streamResponse(result)
+            } else {
+                if ("json" in result) {
+                    result.body = JSON.stringify(result.json)
+                    result.headers = {
+                        ...result.headers,
+                        "content-type": "application/json"
+                    }
+                }
+                return new Response(result.body, {
+                        status: result.status ?? 200,
+                        headers: result.headers
+                    })
+            }
 
         } catch (error) {
             console.error(`"${method}" error:`, error, "\nURL:", url);
@@ -278,6 +286,7 @@ export interface  RouteObjectReturn {
     events?: any
     message?: string
     messages?: string[]
+    json?: any
 }
 
 export interface RouteHandler<T> {
