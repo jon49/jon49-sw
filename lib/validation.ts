@@ -79,8 +79,8 @@ export function createIdNumber(name: string) : (val: number | string) => Promise
 
 export const maybe =
     <T, S>(f: (val: T) => Promise<S>) =>
-    (val: T | undefined) =>
-        !val ? Promise.resolve(undefined) : f(val)
+    (val: T | undefined | null) =>
+        !val ? Promise.resolve(val) : f(val)
 
 export const createDateString =
     (name: string) =>
