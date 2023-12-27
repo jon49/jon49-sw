@@ -1,14 +1,16 @@
 {
   "name": "@jon49/sw",
-  "version": "0.6.3",
+  "version": "0.7.0",
   "description": "Packages for MVC service workers.",
   "type": "module",
-  "files": ["lib"],
+  "files": [
+    "lib"
+  ],
   "exports": {
-      "./routes.js": "./lib/routes.ts",
-      "./new-app-notifier.js": "./lib/new-app-notifier.ts",
-      "./validation.js": "./lib/validation.ts",
-      "./utils.js": "./lib/utils.ts"
+    "./routes.js": "./lib/routes.ts",
+    "./new-app-notifier.js": "./lib/new-app-notifier.ts",
+    "./validation.js": "./lib/validation.ts",
+    "./utils.js": "./lib/utils.ts"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -30,5 +32,8 @@
   "bugs": {
     "url": "https://github.com/jon49/jon49-sw/issues"
   },
-  "homepage": "https://github.com/jon49/jon49-sw#readme"
+  "homepage": "https://github.com/jon49/jon49-sw#readme",
+  "dependencies": {
+    "idb-keyval": "^6.2.1"
+  }
 }
