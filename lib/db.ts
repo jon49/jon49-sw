@@ -66,5 +66,4 @@ export interface Revision { _rev: number }
 
 export type FormReturn<T> = { [key in keyof T]: string|undefined }
 
-export type Theme = "Light" | "Dark" | "System"
-
+export type Theme = "light" | "dark" | "system"
