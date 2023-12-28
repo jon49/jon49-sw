@@ -44,7 +44,7 @@ const update: DBUpdate<any> =
 async function update(key: any, f: any, options = { sync: true }) {
     await update1(key, f)
     if (options.sync) {
-        let o : any = await get(key)
+        let o: any = await get<any>(key)
         if (o && "_rev" in o) {
             await _updated(key)
         } else {
@@ -53,7 +53,7 @@ async function update(key: any, f: any, options = { sync: true }) {
     }
 }
 
-export { update, set, getMany, setMany, clear }
+export { update, set, get, getMany, setMany, clear }
 
 export interface DBGet<DBAccessors extends any> {
     <K extends keyof DBAccessors>(key: K): Promise<DBAccessors[K] | undefined>
@@ -65,4 +65,6 @@ export type Updated = Set<IDBValidKey>
 export interface Revision { _rev: number }
 
 export type FormReturn<T> = { [key in keyof T]: string|undefined }
+
+export type Theme = "Light" | "Dark" | "System"
 
