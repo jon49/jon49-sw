@@ -21,6 +21,7 @@ interface ResponseOptions {
     version?: string
     links?: { url: string, file: string }[]
     routes?: Route[]
+    page?: any
 }
 
 export let options: ResponseOptions = {}
@@ -83,10 +84,38 @@ function isMethod(method: unknown) {
     return null
 }
 
-export function findRoute(url: URL, method: unknown) {
+let cache = new Map<string, any>()
+export async function findRoute(url: URL, method: unknown) {
     let validMethod : MethodTypes = isMethod(method)
     if (validMethod) {
         for (const r of options.routes ?? []) {
+            if (r.file
+                && (r.route instanceof RegExp && r.route.test(url.pathname)
+                 || (r.route instanceof Function && r.route(url)))) {
+                let links = options.links
+                let file = links?.find(x => x.url === r.file)?.file
+                // Load file
+                if (!file) {
+                    console.error(`"${r.file}" not found in links!`)
+                    return null
+                }
+                if (!cache.has(file)) {
+                    let cachedResponse = await cacheResponse(file)
+                    if (!cacheResponse) {
+                        console.error(`"${file}" not found in cache!`)
+                        return null
+                    }
+                    let text = await cachedResponse.text()
+                    let func = new Function("app", text)(options.page)
+                    cache.set(file, func)
+                }
+
+                let routeDef = cache.get(file)
+                if (routeDef[validMethod]) {
+                    return routeDef[validMethod]
+                }
+            }
+
             if (r[validMethod]
                 && (r.route instanceof RegExp && r.route.test(url.pathname)
                     || (r.route instanceof Function && r.route(url)))) {
@@ -110,7 +139,7 @@ async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Pro
 
     let handlers =
         <RouteHandler<RouteGetArgs | RoutePostArgs> | null>
-        findRoute(url, method)
+        await findRoute(url, method)
 
     // @ts-ignore
     if (handlers) {
@@ -217,7 +246,7 @@ async function getData(req: Request) {
     return o
 }
 
-async function cacheResponse(url: string, event: { request: string | Request } | undefined) : Promise<Response> {
+async function cacheResponse(url: string, event?: { request: string | Request } | undefined) : Promise<Response> {
     url = options.links?.find(x => x.url === url)?.file || url
     const match = await caches.match(url)
     if (match) return match
@@ -307,9 +336,20 @@ export interface RouteGetHandler {
     [handler: string]: RouteHandler<RouteGetArgs>
 }
 
-export interface Route {
+interface Route_ {
     route: RegExp | ((a: URL) => boolean)
+    file?: string
     get?: RouteHandler<RouteGetArgs> | RouteGetHandler
     post?: RouteHandler<RoutePostArgs> | RoutePostHandler
 }
+
+type RequireAtLeastOne<T, Keys extends keyof T = keyof T> =
+    Pick<T, Exclude<keyof T, Keys>> 
+    & {
+        [K in Keys]-?: Required<Pick<T, K>> & Partial<Pick<T, Exclude<Keys, K>>>
+    }[Keys]
+
+export type Route = RequireAtLeastOne<Route_, "file" | "get" | "post">
+export type RoutePage = Pick<Route_, "get" | "post">
+
 
