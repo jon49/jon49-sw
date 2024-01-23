@@ -21,7 +21,6 @@ function searchParams<TReturn>(req: Request) : TReturn & {_url: URL} {
 
 interface ResponseOptions {
     handleErrors?: Function
-    page?: any
 }
 
 export let options: ResponseOptions = {}
@@ -106,7 +105,7 @@ export async function findRoute(url: URL, method: unknown) {
                         return null
                     }
                     let text = await cachedResponse.text()
-                    let func = new Function("app", text)(options.page)
+                    let func = new Function(text)()
                     cache.set(file, func)
                 }
 
@@ -353,6 +352,5 @@ type RequireAtLeastOne<T, Keys extends keyof T = keyof T> =
 
 export type Route = RequireAtLeastOne<Route_, "file" | "get" | "post">
 export type RoutePage = Pick<Route_, "get" | "post">
-
 
 
