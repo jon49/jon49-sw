@@ -1,3 +1,6 @@
+// @ts-ignore
+let links: { file: string, url: string }[] | undefined = self.app.links
+
 function redirect(req: Request) {
   return Response.redirect(req.referrer, 303)
 }
@@ -18,9 +21,6 @@ function searchParams<TReturn>(req: Request) : TReturn & {_url: URL} {
 
 interface ResponseOptions {
     handleErrors?: Function
-    version?: string
-    links?: { url: string, file: string }[]
-    routes?: Route[]
     page?: any
 }
 
@@ -88,11 +88,11 @@ let cache = new Map<string, any>()
 export async function findRoute(url: URL, method: unknown) {
     let validMethod : MethodTypes = isMethod(method)
     if (validMethod) {
-        for (const r of options.routes ?? []) {
+        // @ts-ignore
+        for (const r of self.app.routes ?? []) {
             if (r.file
                 && (r.route instanceof RegExp && r.route.test(url.pathname)
                  || (r.route instanceof Function && r.route(url)))) {
-                let links = options.links
                 let file = links?.find(x => x.url === r.file)?.file
                 // Load file
                 if (!file) {
@@ -247,13 +247,15 @@ async function getData(req: Request) {
 }
 
 async function cacheResponse(url: string, event?: { request: string | Request } | undefined) : Promise<Response> {
-    url = options.links?.find(x => x.url === url)?.file || url
+    url = links?.find(x => x.url === url)?.file || url
     const match = await caches.match(url)
     if (match) return match
     const res = await fetch(event?.request || url)
     if (!res || res.status !== 200 || res.type !== "basic") return res
     const responseToCache = res.clone()
-    const cache = await caches.open(options.version ?? "")
+    // @ts-ignore
+    let version: string = self.app.version
+    const cache = await caches.open(version ?? "")
     cache.put(url, responseToCache)
     return res
 }
@@ -351,5 +353,6 @@ type RequireAtLeastOne<T, Keys extends keyof T = keyof T> =
 
 export type Route = RequireAtLeastOne<Route_, "file" | "get" | "post">
 export type RoutePage = Pick<Route_, "get" | "post">
+
 
 
