@@ -17,10 +17,8 @@ export async function handleJsonUpdate(filename: string, targetDirectory: string
         await rm(oldFile)
     }
 
-    filename = `./src/${filename}`
     let filenameWithHash = await addHash(filename)
-    console.log("Copying", filename, "to", filenameWithHash.replace("src", targetDirectory))
-    await cp(filename, filenameWithHash.replace("src", targetDirectory), {
+    await cp(`./src/${filename}`, `${targetDirectory}/${filenameWithHash}`, {
         recursive: true,
     })
     console.timeEnd("Copying JSON")

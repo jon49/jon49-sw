@@ -33,6 +33,11 @@ export async function rmAll(targetDirectory: string, glob: Glob, predicate: (fil
     Promise.all(files.map(file => rm(`${targetDirectory}/${file}`)))
 }
 
+/**
+* Add a hash to the filename and return the new filename.
+* IMPORTANT: The file name should not include "./src/", this added in the
+* function.
+*/
 export async function addHash(filename: string) {
     let file = await Bun.file(`./src/${filename}`).arrayBuffer()
     let hash = Bun.hash(file).toString(16)
