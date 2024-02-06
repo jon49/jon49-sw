@@ -1,5 +1,9 @@
 // @ts-ignore
-let links: { file: string, url: string }[] | undefined = self.app.links
+let links: { file: string, url: string }[] | undefined = self.app?.links
+
+if (!links) {
+    console.error("Expecting links defined with `self.app.links`, but found none.")
+}
 
 function redirect(req: Request) {
   return Response.redirect(req.referrer, 303)
@@ -88,7 +92,12 @@ export async function findRoute(url: URL, method: unknown) {
     let validMethod : MethodTypes = isMethod(method)
     if (validMethod) {
         // @ts-ignore
-        for (const r of self.app.routes ?? []) {
+        if (!self.app?.routes) {
+            console.error("Expecting routes defined with `self.app.routes`, but found none.")
+            return null
+        }
+        // @ts-ignore
+        for (const r of self.app.routes) {
             if (r.file
                 && (r.route instanceof RegExp && r.route.test(url.pathname)
                  || (r.route instanceof Function && r.route(url)))) {
