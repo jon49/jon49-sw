@@ -40,7 +40,7 @@ export async function buildJS(isProd: boolean, targetDirectory: string) {
     }
 
     if (bundleFiles.length) {
-        await Bun.build({
+        let output = await Bun.build({
             entrypoints: bundleFiles,
             outdir: targetDirectory,
             minify: isProd,
@@ -49,10 +49,15 @@ export async function buildJS(isProd: boolean, targetDirectory: string) {
             root: "./src",
             target: "browser",
         })
+        if (output.logs.length) {
+            for (let log of output.logs) {
+                console.log(log)
+            }
+        }
     }
 
     if (staticFiles.length) {
-        await Bun.build({
+        let output = await Bun.build({
             entrypoints: staticFiles,
             outdir: targetDirectory,
             minify: isProd,
@@ -62,6 +67,11 @@ export async function buildJS(isProd: boolean, targetDirectory: string) {
             target: "browser",
             external: ["*"],
         })
+        if (output.logs.length) {
+            for (let log of output.logs) {
+                console.log(log)
+            }
+        }
     }
 
     // Change export default to return
