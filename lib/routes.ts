@@ -262,8 +262,9 @@ async function cacheResponse(url: string, event?: { request: string | Request } 
     if (!res || res.status !== 200 || res.type !== "basic") return res
     const responseToCache = res.clone()
     // @ts-ignore
-    let version: string = self.app.version
-    const cache = await caches.open(version ?? "")
+    let version: string = self.app?.version
+        ?? (console.warn("The version number is not available, expected glboal value `self.app.version`."), "")
+    const cache = await caches.open(version)
     cache.put(url, responseToCache)
     return res
 }
