@@ -1,9 +1,12 @@
 {
   "name": "@jon49/sw",
-  "version": "0.10.5",
+  "version": "0.11.0",
   "description": "Packages for MVC service workers.",
   "type": "module",
-  "files": [ "lib", "tasks" ],
+  "files": [
+    "lib",
+    "tasks"
+  ],
   "exports": {
     "./routes.js": "./lib/routes.ts",
     "./new-app-notifier.js": "./lib/new-app-notifier.ts",
@@ -21,9 +24,9 @@
   "author": "Jon Nyman",
   "license": "ISC",
   "devDependencies": {
-    "@types/bun": "^1.0.4",
-    "esbuild": "^0.19.8",
-    "typescript": "^5.3.2"
+    "@types/bun": "^1.0.5",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.3"
   },
   "repository": {
     "type": "git",

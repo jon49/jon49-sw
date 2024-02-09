@@ -50,7 +50,7 @@ export function insertString(original: string, insert: string, index: number) {
     return original.slice(0, index) + insert + original.slice(index)
 }
 
-export async function getUpdateType(filename: string | Error | undefined) {
+export async function getUpdateType(filename: string | Error | undefined | null) {
     if (filename == undefined || filename instanceof Error) {
         return UpdateType.OTHER
     }
