@@ -78,7 +78,7 @@ export async function buildJS(isProd: boolean, targetDirectory: string) {
     for await (const page of new Glob("**/*\\.page.*.js").scan(targetDirectory)) {
         let bunFile = file(`${targetDirectory}/${page}`)
         let content = await bunFile.text()
-        let matched = content.match(/,(\S*)=(\S*);export/)
+        let matched = content.match(/,(\w*)=(\w*);export/)
         if (matched) {
             let [, name, value] = matched
             content = content.replace(`,${name}=${value}`, "")
@@ -86,7 +86,7 @@ export async function buildJS(isProd: boolean, targetDirectory: string) {
                 `export{${name} as default}`,
                 `return ${value}`)
         } else {
-            let matched = content.match(/var (\S*) = (\S*);\sexport \{\s.*\s.*/)
+            let matched = content.match(/var (\w*) = (\w*);\sexport \{\s.*\s.*/)
             if (!matched) {
                 continue
             }
