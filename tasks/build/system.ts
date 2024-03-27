@@ -50,12 +50,13 @@ export function insertString(original: string, insert: string, index: number) {
     return original.slice(0, index) + insert + original.slice(index)
 }
 
-export async function getUpdateType(filename: string | Error | undefined | null) {
+export async function getUpdatedFilename(filename: any) {
     if (filename == undefined || filename instanceof Error) {
-        return UpdateType.OTHER
+        return undefined
     }
 
     filename = `./src/${filename}`
+
     if (typeof filename === "string" && filename.endsWith("4913")) {
         // scan for latest updated file in directory, shallow
         let dir = filename.replace("4913", "")
@@ -76,6 +77,15 @@ export async function getUpdateType(filename: string | Error | undefined | null)
         }
         filename = newestFile?.file ?? ""
     }
+
+    return filename.replace("./src/", "")
+}
+
+export function getUpdateType(filename: string | Error | undefined | null) {
+    if (filename == undefined || filename instanceof Error) {
+        return UpdateType.OTHER
+    }
+
     console.log(`File changed: ${filename}`)
     return setUpdateType(filename)
 }

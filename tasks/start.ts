@@ -1,7 +1,7 @@
 import { rm } from "node:fs/promises"
 import { watch } from "fs"
 import { server } from "./build/server.ts"
-import { UpdateType, getUpdateType } from "./build/system.ts"
+import { UpdateType, getUpdateType, getUpdatedFilename } from "./build/system.ts"
 import { handleCssUpdate, initCss } from "./build/css.ts"
 import { buildJS } from "./build/jsFiles.ts"
 import { handleHTML } from "./build/html.ts"
@@ -44,7 +44,8 @@ if (build !== "prod") {
             if (filename === "web/file-map.ts") {
                 return
             }
-            let updateType = await getUpdateType(filename)
+            filename = await getUpdatedFilename(filename)
+            let updateType = getUpdateType(filename)
             switch (updateType) {
                 case UpdateType.JS:
                     await buildJS(isProd, targetDirectory)
