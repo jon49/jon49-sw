@@ -1,82 +1,148 @@
-import { rm } from "node:fs/promises"
-import { watch } from "fs"
-import { server } from "./build/server.ts"
-import { UpdateType, getUpdateType, getUpdatedFilename } from "./build/system.ts"
-import { handleCssUpdate, initCss } from "./build/css.ts"
-import { buildJS } from "./build/jsFiles.ts"
-import { handleHTML } from "./build/html.ts"
-import { handleJsonUpdate, initJson } from "./build/json.ts"
-import { fileMapper, getHTMLMappableFiles } from "./build/file-mapper.ts"
-import { handleSw } from "./build/sw.ts"
-import { handlImages } from "./build/images.ts"
+import { cp, rm, mkdir } from "node:fs/promises"
+import path from "node:path"
 
-// prod, dev, or server
-const build = process.argv[2] ?? "dev"
+import esbuild from "esbuild"
 
-let targetDirectory =
-    build === "server"
-        ? "../exercise-server/public"
-    : "./public"
+import { transformExportToReturn, updateFileMapper, updateHTML } from "./lib/esbuild-plugins.ts"
+import { addHash, glob } from "./lib/system.ts"
+import { Arguments } from "./arguments.ts"
 
-const isProd = build === "prod"
+let argv = new Arguments()
+
+if (argv.isHelp) {
+    console.log("Usage: node --experimental-strip-types start.ts [options]")
+    console.log("Options:")
+    console.log("  -e, --env, --environment  Environment (dev, server, prod)")
+    console.log("  -p, --port                Port (default: 3000)")
+    console.log("  -t, --target              Target directory (default: ./public)")
+    console.log("  -h, --help                Help")
+    process.exit(0)
+}
+
+let targetDirectory = argv.targetDirectory
+let isProd = argv.isProd
 
 console.time("Cleaning")
 await rm(targetDirectory, { recursive: true, force: true })
 console.timeEnd("Cleaning")
 
-console.time("Initializing")
-await initCss(targetDirectory)
-await buildJS(isProd, targetDirectory)
-await initJson(targetDirectory)
-await handlImages(targetDirectory)
+console.time("Copying Files")
+await mkdir(targetDirectory, { recursive: true })
+let filesToCopy = await glob("**/*.{ico,png,svg,json}", "./src")
+let copyFiles = await glob("**/*.min.*", "./src")
+filesToCopy.push(...copyFiles)
+let hashedFiles = await Promise.all(filesToCopy.map(x => addHash(x)))
+await Promise.all(filesToCopy.map((filename, i) => {
+    let source = path.join("src", filename)
+    let target = path.join(targetDirectory, hashedFiles[i])
+    return cp(source, target, { recursive: true })
+}))
+console.timeEnd("Copying Files")
 
-let mapper = await fileMapper(targetDirectory)
-let mappable = await getHTMLMappableFiles(mapper)
-await handleHTML(targetDirectory, mappable)
-await handleSw(targetDirectory)
-console.timeEnd("Initializing")
+console.time("Processing JS")
 
-if (build !== "prod") {
-    const srcWatcher = watch(
-        `./src`,
-        { recursive: true },
-        async (_, filename) => {
-            if (filename === "web/file-map.ts") {
-                return
-            }
-            filename = await getUpdatedFilename(filename)
-            let updateType = getUpdateType(filename)
-            switch (updateType) {
-                case UpdateType.JS:
-                    await buildJS(isProd, targetDirectory)
-                    break
-                case UpdateType.CSS:
-                    // Get Hex Hash of CSS File and Copy to Public
-                    handleCssUpdate(<string>filename, targetDirectory)
-                    break
-                case UpdateType.HTML:
-                    // Copy HTML File to Public
-                    // Just do that once. I can restart the server if I need to.
-                    break
-                case UpdateType.JSON:
-                    handleJsonUpdate(<string>filename, targetDirectory)
-                    break
-                case UpdateType.OTHER:
-                    // Do nothing
-            }
+// Bundled modules
+const ctxBundles = await esbuild.context({
+    entryPoints: [
+        "./src/**/*.bundle.ts",
+    ],
+    entryNames: "[dir]/[name].[hash]",
+    bundle: true,
+    format: "esm",
+    minify: isProd,
+    outbase: "src",
+    outdir: targetDirectory,
+    plugins: [
+        updateFileMapper(targetDirectory),
+    ],
+    target: "es2023",
+    // logLevel: "debug",
+})
 
-            await fileMapper(targetDirectory)
-            await handleSw(targetDirectory)
-        }
-    )
+// IIFEs
+const ctxIIFEs = await esbuild.context({
+    entryPoints: [
+        "./src/**/*.global.ts",
+        "./src/web/sw.ts",
+    ],
+    entryNames: "[dir]/[name].[hash]",
+    bundle: true,
+    format: "iife",
+    minify: isProd,
+    outbase: "src",
+    outdir: targetDirectory,
+    plugins: [
+        updateFileMapper(targetDirectory),
+    ],
+    target: "es2023",
+    // logLevel: "debug",
+})
 
-    if (build === "dev") {
-        server({ targetDirectory })
-    }
+// Static JS files
+let staticFiles = await glob("**/js/*.{js,ts}", "./src")
+let isStaticFile = /.*\/[0-9a-zA-Z\-]+.[jt]s/
+let staticEntryPoints =
+        staticFiles
+            .filter(x =>
+                    isStaticFile.test(x)
+                    && !x.includes(".bundle.")
+                    && !x.includes(".min.")
+                    && !x.includes("sw.ts"))
+            .map(x => `./src/${x}`)
 
-    process.on("SIGINT", () => {
-        srcWatcher.close();
-        process.exit(0);
-    });
+let ctxStaticFiles = await esbuild.context({
+    entryPoints: [
+        "./src/**/*.css",
+        ...staticEntryPoints,
+    ],
+    entryNames: "[dir]/[name].[hash]",
+    bundle: true,
+    format: "esm",
+    minify: isProd,
+    outbase: "src",
+    outdir: targetDirectory,
+    plugins: [
+        updateHTML(targetDirectory),
+        updateFileMapper(targetDirectory),
+    ],
+    target: "es2023",
+    external: ["*"],
+})
+
+// Pages
+const ctxPages = await esbuild.context({
+    entryPoints: [
+        "./src/**/*.page.ts",
+    ],
+    entryNames: "[dir]/[name].[hash]",
+    bundle: true,
+    format: "esm",
+    minify: isProd,
+    outbase: "src",
+    outdir: targetDirectory,
+    plugins: [
+        transformExportToReturn(targetDirectory),
+        updateFileMapper(targetDirectory),
+    ],
+    target: "es2023",
+})
+
+console.timeEnd("Processing JS")
+
+if (!isProd) {
+    console.log("Watching...")
+    ctxStaticFiles.watch()
+    ctxPages.watch()
+    ctxBundles.watch()
+    ctxIIFEs.serve({ port: argv.port, servedir: targetDirectory, host: "localhost" })
+} else {
+    console.time("Bundling")
+    await Promise.all([
+        ctxBundles.rebuild(),
+        ctxIIFEs.rebuild(),
+        ctxStaticFiles.rebuild(),
+        ctxPages.rebuild(),
+    ])
+    console.timeEnd("Bundling")
 }
 

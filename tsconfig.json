@@ -3,12 +3,14 @@
 
     "compilerOptions": {
         "target": "ES2020",
-        "module": "es2022",
+        "module": "ESNext",
+        "moduleResolution": "nodenext",
         "lib": ["webworker", "ES2020", "ES2021", "DOM", "DOM.Iterable"],
 
         "strict": true,
         "noImplicitAny": true,
         "strictFunctionTypes": true,
+        "esModuleInterop": true,
         "strictBindCallApply": true,
         "strictPropertyInitialization": true,
         "noImplicitThis": true,
@@ -23,6 +25,10 @@
         "declaration": true,
         "emitDeclarationOnly": true,
         "skipLibCheck": true,
+
+        "forceConsistentCasingInFileNames": true,
+        "moduleResolution": "node",
+        "allowSyntheticDefaultImports": true,
 
         "outDir": "./dist",
         "rootDir": "./src"
