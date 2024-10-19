@@ -15,7 +15,8 @@
     "./db.js": "./lib/db.ts"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "esbuild --bundle --platform=node --format=esm --outdir=bin ./tasks/start.ts"
   },
   "keywords": [
     "service-worker",
