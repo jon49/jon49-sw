@@ -5,7 +5,7 @@ import esbuild from "esbuild"
 
 import { transformExportToReturn, updateFileMapper, updateHTML } from "./lib/esbuild-plugins.ts"
 import { addHash, glob } from "./lib/system.ts"
-import { Arguments } from "./arguments.ts"
+import { Arguments } from "./lib/arguments.ts"
 
 let argv = new Arguments()
 

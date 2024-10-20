@@ -1,11 +1,11 @@
 {
   "name": "@jon49/sw",
-  "version": "0.12.3",
+  "version": "0.12.9",
   "description": "Packages for MVC service workers.",
   "type": "module",
   "files": [
     "lib",
-    "tasks"
+    "bin"
   ],
   "exports": {
     "./routes.js": "./lib/routes.ts",
@@ -15,8 +15,7 @@
     "./db.js": "./lib/db.ts"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "esbuild --bundle --platform=node --format=esm --outdir=bin ./tasks/start.ts"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "service-worker",
