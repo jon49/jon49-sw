@@ -39,10 +39,8 @@ await Promise.all(filesToCopy.map((filename, i) => {
 }))
 console.timeEnd("Copying Files")
 
-console.time("Processing JS")
-
 // Bundled modules
-const ctxBundles = await esbuild.context({
+const bundleConfig = {
     entryPoints: [
         "./src/**/*.bundle.ts",
     ],
@@ -57,10 +55,10 @@ const ctxBundles = await esbuild.context({
     ],
     target: "es2023",
     // logLevel: "debug",
-})
+}
 
 // IIFEs
-const ctxIIFEs = await esbuild.context({
+const iifeConfig = {
     entryPoints: [
         "./src/**/*.global.ts",
         "./src/web/sw.ts",
@@ -76,7 +74,7 @@ const ctxIIFEs = await esbuild.context({
     ],
     target: "es2023",
     // logLevel: "debug",
-})
+}
 
 // Static JS files
 let staticFiles = await glob("**/js/*.{js,ts}", "./src")
@@ -90,7 +88,7 @@ let staticEntryPoints =
                     && !x.includes("sw.ts"))
             .map(x => `./src/${x}`)
 
-let ctxStaticFiles = await esbuild.context({
+const staticFileConfig = {
     entryPoints: [
         "./src/**/*.css",
         ...staticEntryPoints,
@@ -107,10 +105,10 @@ let ctxStaticFiles = await esbuild.context({
     ],
     target: "es2023",
     external: ["*"],
-})
+}
 
 // Pages
-const ctxPages = await esbuild.context({
+const pagesConfig = {
     entryPoints: [
         "./src/**/*.page.ts",
     ],
@@ -125,24 +123,32 @@ const ctxPages = await esbuild.context({
         updateFileMapper(targetDirectory),
     ],
     target: "es2023",
-})
+}
 
-console.timeEnd("Processing JS")
+const configs = [
+    bundleConfig,
+    iifeConfig,
+    staticFileConfig,
+    pagesConfig,
+]
 
-if (!isProd) {
-    console.log("Watching...")
-    ctxStaticFiles.watch()
-    ctxPages.watch()
-    ctxBundles.watch()
-    ctxIIFEs.serve({ port: argv.port, servedir: targetDirectory, host: "localhost" })
+if (isProd) {
+    console.time("Building")
+    // @ts-ignore
+    await Promise.all(configs.map(x => esbuild.build(x)))
+    console.timeEnd("Building")
 } else {
-    console.time("Bundling")
-    await Promise.all([
-        ctxBundles.rebuild(),
-        ctxIIFEs.rebuild(),
-        ctxStaticFiles.rebuild(),
-        ctxPages.rebuild(),
-    ])
-    console.timeEnd("Bundling")
+    console.time("Watching")
+    // @ts-ignore
+    let contexts = await Promise.all(configs.map(x => esbuild.context(x)))
+    for (let i = 0; i < contexts.length; i++) {
+        let ctx = contexts[i]
+        if (i === 0) {
+            ctx.serve({ port: argv.port, servedir: targetDirectory, host: "localhost" })
+        } else {
+            ctx.watch()
+        }
+    }
+    console.timeEnd("Watching")
 }
 
