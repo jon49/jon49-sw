@@ -21,6 +21,7 @@ if (argv.isHelp) {
 
 let targetDirectory = argv.targetDirectory
 let isProd = argv.isProd
+let isServer = argv.isServer
 
 console.time("Cleaning")
 await rm(targetDirectory, { recursive: true, force: true })
@@ -143,8 +144,9 @@ if (isProd) {
     let contexts = await Promise.all(configs.map(x => esbuild.context(x)))
     for (let i = 0; i < contexts.length; i++) {
         let ctx = contexts[i]
-        if (i === 0) {
+        if (i === 0 && !isServer) {
             ctx.serve({ port: argv.port, servedir: targetDirectory, host: "localhost" })
+            console.log(`###### Serving on http://localhost:${argv.port} ######`)
         } else {
             ctx.watch()
         }

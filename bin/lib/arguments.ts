@@ -26,6 +26,9 @@ export class Arguments {
     get isProd() {
         return this.environment === "prod"
     }
+    get isServer() {
+        return this.environment === "server"
+    }
 }
 
 export interface Argv {
