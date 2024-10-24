@@ -83,7 +83,7 @@ async function handleHTML(targetDirectory: string) {
 
     let mappableFiles =
         (await Promise.all(
-        (await glob("**/{css,js,images}/*.*", "./src"))
+        (await glob("**/{css,js,images}/**/*.*", "./src"))
         .map(async x => {
             let ext = path.extname(x)
             if (ext === ".ts") {
