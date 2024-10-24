@@ -40,7 +40,9 @@ export async function findHashedFile(
 
     let parsed = path.parse(filename)
     for await (const file of Glob(`**/${parsed.dir}/${parsed.name}.*${ext}`, { cwd: targetDirectory })) {
-        return file
+        if (file.startsWith(parsed.dir)) {
+            return file
+        }
     }
 }
 
