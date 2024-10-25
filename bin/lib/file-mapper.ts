@@ -51,11 +51,15 @@ export async function fileMapper(targetDirectory: string, force = false) {
         })
         .filter(isFileMapper)
 
-        // Write mapper to file in src/web/file-map.js
         if (option.isWaiting) return
-        let fileMapContent = `(() => { self.app = { links: ${JSON.stringify(mapper)} } })()`
-        let hash = getHash(fileMapContent)
+        // Write mapper to file in src/web/file-map.js
+        let fileMapJsonContent = JSON.stringify(mapper)
+        let hash = getHash(fileMapJsonContent)
         let fileMapUrl = `/web/file-map.${hash}.js`
+
+        fileMapJsonContent = `${fileMapJsonContent.slice(0, -1)},{"url":"/web/file-map.js","file":"${fileMapUrl}"}]`
+
+        let fileMapContent = `(() => { self.app = { links: ${fileMapJsonContent} } })()`
         await write(`${targetDirectory}${fileMapUrl}`, fileMapContent)
 
         let globalFiles =

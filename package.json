@@ -1,6 +1,6 @@
 {
   "name": "@jon49/sw",
-  "version": "0.12.11",
+  "version": "0.12.12",
   "description": "Packages for MVC service workers.",
   "type": "module",
   "files": [
