@@ -175,13 +175,8 @@ async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Pro
             }
 
             if (isHtml(result)) {
-                if (req.referrer.length > 0) {
-                    let referrer = new URL(req.referrer)
-                    if (referrer.pathname.startsWith("/web")
-                        && url.searchParams.get("refresh") !== "hard"
-                        && req.headers.get("HF-Request") !== "true") {
-                        result = html`<template>${result}</template>`
-                    }
+                if (req.url.includes("hz")) {
+                    result = html`<template>${result}</template>`
                 }
 
                 return streamResponse({
