@@ -1,5 +1,6 @@
-// @ts-ignore
-let links: { file: string, url: string }[] | undefined = self.app?.links
+let { html, links } =
+    // @ts-ignore
+    self.app as { links: { file: string, url: string }[], html: Function }
 
 if (!links) {
     console.error("Expecting links defined with `self.app.links`, but found none.")
@@ -174,6 +175,15 @@ async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Pro
             }
 
             if (isHtml(result)) {
+                if (req.referrer.length > 0) {
+                    let referrer = new URL(req.referrer)
+                    if (referrer.pathname.startsWith("/web")
+                        && url.searchParams.get("refresh") !== "hard"
+                        && req.headers.get("HF-Request") !== "true") {
+                        result = html`<template>${result}</template>`
+                    }
+                }
+
                 return streamResponse({
                     body: result,
                     headers: htmfHeader(req, null, messages)

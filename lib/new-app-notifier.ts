@@ -4,7 +4,9 @@ let refreshing = false
 // Here we reload the page
 navigator.serviceWorker.addEventListener('controllerchange', function () {
     if (refreshing) return
-    window.location.reload()
+    let url = new URL(window.location.href)
+    url.searchParams.set("refresh", "hard")
+    window.location.href = url.href
     refreshing = true
 })
 
