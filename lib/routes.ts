@@ -1,6 +1,6 @@
-let { html, links } =
+let { html, links, db, globalDb } =
     // @ts-ignore
-    self.app as { links: { file: string, url: string }[], html: Function }
+    self.app as { links: { file: string, url: string }[], html: Function, db: any, globalDb: any }
 
 if (!links) {
     console.error("Expecting links defined with `self.app.links`, but found none.")
@@ -99,6 +99,7 @@ export async function findRoute(url: URL, method: unknown) {
         }
         // @ts-ignore
         for (const r of self.app.routes) {
+            // @ts-ignore
             if (r.file
                 && (r.route instanceof RegExp && r.route.test(url.pathname)
                  || (r.route instanceof Function && r.route(url)))) {
@@ -144,7 +145,25 @@ interface ExectuteHandlerOptions {
 async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Promise<Response> {
     let method = req.method.toLowerCase()
     let isPost = method === "post"
-    if (!isPost && !url.pathname.endsWith("/")) return cacheResponse(url.pathname, event)
+    if (!isPost) {
+        if (!url.pathname.endsWith("/")) {
+            return cacheResponse(url.pathname, event)
+        }
+
+        if (url.searchParams.get("login") === "success") {
+            await globalDb.setLoggedIn(true)
+        }
+
+        let lastUrl: string | undefined
+        if (url.pathname === "/web/" && (lastUrl = (await db.get("last-url"))?.url)) {
+            url = new URL(lastUrl)
+        } else if (url.searchParams.has("pushUrl") || url.searchParams.has("hz")) {
+            let saveUrl = new URL(url.href)
+            saveUrl.searchParams.delete("pushUrl")
+            saveUrl.searchParams.delete("hz")
+            await db.set("last-url", { url: saveUrl.href }, { sync: false })
+        }
+    }
 
     let handlers =
         <RouteHandler<RouteGetArgs | RoutePostArgs> | null>
@@ -175,7 +194,7 @@ async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Pro
             }
 
             if (isHtml(result)) {
-                if (req.url.includes("hz")) {
+                if (url.searchParams.has("hz")) {
                     result = html`<template>${result}</template>`
                 }
 
@@ -367,5 +386,4 @@ type RequireAtLeastOne<T, Keys extends keyof T = keyof T> =
 
 export type Route = RequireAtLeastOne<Route_, "file" | "get" | "post">
 export type RoutePage = Pick<Route_, "get" | "post">
-
 
