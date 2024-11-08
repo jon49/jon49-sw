@@ -19,8 +19,7 @@ const searchParamsHandler = {
   }
 }
 
-function searchParams<TReturn>(req: Request) : TReturn & {_url: URL} {
-  let url = new URL(req.url)
+function searchParams<TReturn>(url: URL) : TReturn & {_url: URL} {
   return new Proxy(url, searchParamsHandler)
 }
 
@@ -174,7 +173,7 @@ async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Pro
         try {
             let messages: string[] = []
             const data = await getData(req)
-            let query = searchParams<{ handler?: string }>(req)
+            let query = searchParams<{ handler?: string }>(url)
             let args = { req, data, query }
             let result = await (
                 handlers instanceof Function
