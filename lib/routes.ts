@@ -153,15 +153,6 @@ async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Pro
             await globalDb.setLoggedIn(true)
         }
 
-        let lastUrl: string | undefined
-        if (url.pathname === "/web/" && (lastUrl = (await db.get("last-url"))?.url)) {
-            url = new URL(lastUrl)
-        } else if (url.searchParams.has("pushUrl") || url.searchParams.has("hz")) {
-            let saveUrl = new URL(url.href)
-            saveUrl.searchParams.delete("pushUrl")
-            saveUrl.searchParams.delete("hz")
-            await db.set("last-url", { url: saveUrl.href }, { sync: false })
-        }
     }
 
     let handlers =
@@ -193,9 +184,6 @@ async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Pro
             }
 
             if (isHtml(result)) {
-                if (url.searchParams.has("hz")) {
-                    result = html`<template>${result}</template>`
-                }
 
                 return streamResponse({
                     body: result,
