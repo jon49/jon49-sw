@@ -1,4 +1,4 @@
-let { html, links, db, globalDb } =
+let { links, globalDb } =
     // @ts-ignore
     self.app as { links: { file: string, url: string }[], html: Function, db: any, globalDb: any }
 
