@@ -7,20 +7,20 @@ if (!links) {
 }
 
 function redirect(req: Request) {
-  return Response.redirect(req.referrer, 303)
+    return Response.redirect(req.referrer, 303)
 }
 
 const searchParamsHandler = {
-  get(obj: any, prop: string) {
-    if (prop === "_url") {
-      return obj
+    get(obj: any, prop: string) {
+        if (prop === "_url") {
+            return obj
+        }
+        return obj.searchParams.get(prop)
     }
-    return obj.searchParams.get(prop)
-  }
 }
 
-function searchParams<TReturn>(url: URL) : TReturn & {_url: URL} {
-  return new Proxy(url, searchParamsHandler)
+function searchParams<TReturn>(url: URL): TReturn & { _url: URL } {
+    return new Proxy(url, searchParamsHandler)
 }
 
 interface ResponseOptions {
@@ -35,15 +35,15 @@ let isHtml = (value: any) =>
     && value.throw instanceof Function
 
 // @ts-ignore
-export async function getResponse(event: FetchEvent): Promise<Response>  {
+export async function getResponse(event: FetchEvent): Promise<Response> {
     try {
-        const req : Request = event.request
+        const req: Request = event.request
         const url = normalizeUrl(req.url)
         return (
             !url.pathname.startsWith("/web/")
                 ? fetch(req)
-            : executeHandler({ url, req, event }))
-    } catch(error) {
+                : executeHandler({ url, req, event }))
+    } catch (error) {
         console.error("Get Response Error", error)
         return new Response("Oops something happened which shouldn't have!")
     }
@@ -52,7 +52,7 @@ export async function getResponse(event: FetchEvent): Promise<Response>  {
 function getErrors(errors: any): string[] {
     return typeof errors === "string"
         ? [errors]
-    : call(options.handleErrors, errors) ?? []
+        : call(options.handleErrors, errors) ?? []
 }
 
 function isHtmf(req: Request) {
@@ -65,12 +65,13 @@ function htmfHeader(req: Request, events: any = {}, messages: string[] = [])
     let userMessages =
         messages?.length > 0
             ? { "user-messages": messages }
-        : null
+            : null
     return {
         "hf-events": JSON.stringify({
-        ...userMessages,
-        ...(events || {})
-    }) ?? "{}" }
+            ...userMessages,
+            ...(events || {})
+        }) ?? "{}"
+    }
 }
 
 function call(fn: Function | undefined, args: any) {
@@ -89,7 +90,7 @@ function isMethod(method: unknown) {
 
 let cache = new Map<string, any>()
 export async function findRoute(url: URL, method: unknown) {
-    let validMethod : MethodTypes = isMethod(method)
+    let validMethod: MethodTypes = isMethod(method)
     if (validMethod) {
         // @ts-ignore
         if (!self.app?.routes) {
@@ -101,7 +102,7 @@ export async function findRoute(url: URL, method: unknown) {
             // @ts-ignore
             if (r.file
                 && (r.route instanceof RegExp && r.route.test(url.pathname)
-                 || (r.route instanceof Function && r.route(url)))) {
+                    || (r.route instanceof Function && r.route(url)))) {
                 let file = links?.find(x => x.url === r.file)?.file
                 // Load file
                 if (!file) {
@@ -141,7 +142,7 @@ interface ExectuteHandlerOptions {
     // @ts-ignore
     event: FetchEvent
 }
-async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Promise<Response> {
+async function executeHandler({ url, req, event }: ExectuteHandlerOptions): Promise<Response> {
     let method = req.method.toLowerCase()
     let isPost = method === "post"
     if (!isPost) {
@@ -152,7 +153,6 @@ async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Pro
         if (url.searchParams.get("login") === "success") {
             await globalDb.setLoggedIn(true)
         }
-
     }
 
     let handlers =
@@ -169,14 +169,14 @@ async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Pro
             let result = await (
                 handlers instanceof Function
                     ? handlers(args)
-                : (call(handlers[query.handler ?? ""], args)
-                   || call(handlers[method], args)
-                   || Promise.reject("I'm sorry, I didn't understand where to route your request.")))
+                    : (call(handlers[query.handler ?? ""], args)
+                        || call(handlers[method], args)
+                        || Promise.reject("I'm sorry, I didn't understand where to route your request.")))
 
             if (!result) {
                 return isPost
                     ? redirect(req)
-                : new Response("Not Found!", { status: 404 })
+                    : new Response("Not Found!", { status: 404 })
             }
 
             if (isPost && result.message == null) {
@@ -184,7 +184,6 @@ async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Pro
             }
 
             if (isHtml(result)) {
-
                 return streamResponse({
                     body: result,
                     headers: htmfHeader(req, null, messages)
@@ -213,9 +212,9 @@ async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Pro
                     }
                 }
                 return new Response(result.body, {
-                        status: result.status ?? 200,
-                        headers: result.headers
-                    })
+                    status: result.status ?? 200,
+                    headers: result.headers
+                })
             }
 
         } catch (error) {
@@ -227,7 +226,7 @@ async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Pro
                     return new Response("Not Found!", { status: 404 })
                 }
             } else {
-                let errors : string[] = getErrors(error)
+                let errors: string[] = getErrors(error)
                 let headers = htmfHeader(req, {}, errors)
                 return new Response(null, {
                     status: isPost ? 400 : 500,
@@ -244,7 +243,7 @@ async function executeHandler({ url, req, event }: ExectuteHandlerOptions) : Pro
 }
 
 async function getData(req: Request) {
-    let o : any = {}
+    let o: any = {}
     if (req.headers.get("content-type")?.includes("application/x-www-form-urlencoded")) {
         const formData = await req.formData()
         for (let [key, val] of formData.entries()) {
@@ -265,7 +264,7 @@ async function getData(req: Request) {
     return o
 }
 
-async function cacheResponse(url: string, event?: { request: string | Request } | undefined) : Promise<Response> {
+async function cacheResponse(url: string, event?: { request: string | Request } | undefined): Promise<Response> {
     url = links?.find(x => x.url === url)?.file || url
     const match = await caches.match(url)
     if (match) return match
@@ -281,10 +280,10 @@ async function cacheResponse(url: string, event?: { request: string | Request } 
 }
 
 const encoder = new TextEncoder()
-function streamResponse(response: { body: Generator, headers?: any }) : Response {
+function streamResponse(response: { body: Generator, headers?: any }): Response {
     let { body, headers } = response
     const stream = new ReadableStream({
-        async start(controller : ReadableStreamDefaultController<any>) {
+        async start(controller: ReadableStreamDefaultController<any>) {
             try {
                 for await (let x of body) {
                     if (typeof x === "string")
@@ -301,17 +300,18 @@ function streamResponse(response: { body: Generator, headers?: any }) : Response
         headers: {
             "content-type": "text/html; charset=utf-8",
             ...headers,
-        }})
+        }
+    })
 }
 
 /**
 *  /my/url -> /my/url/
 *  /my/script.js -> /my/script.js
 */
-function normalizeUrl(url: string) : URL {
+function normalizeUrl(url: string): URL {
     let uri = new URL(url)
     let path = uri.pathname
-    !uri.pathname.endsWith("/") && (uri.pathname = isFile(path) ? path : path+"/")
+    !uri.pathname.endsWith("/") && (uri.pathname = isFile(path) ? path : path + "/")
     return uri
 }
 
@@ -327,10 +327,10 @@ export interface RouteGetArgs {
 export interface RoutePostArgs {
     query: any
     data: any
-    req: Request 
+    req: Request
 }
 
-export interface  RouteObjectReturn {
+export interface RouteObjectReturn {
     body?: string | AsyncGenerator | null
     status?: number
     headers?: any
@@ -347,7 +347,7 @@ export interface RouteHandler<T> {
         | RouteObjectReturn
         | undefined
         | null
-        | void >
+        | void>
 }
 
 export interface RoutePostHandler {
@@ -366,7 +366,7 @@ interface Route_ {
 }
 
 type RequireAtLeastOne<T, Keys extends keyof T = keyof T> =
-    Pick<T, Exclude<keyof T, Keys>> 
+    Pick<T, Exclude<keyof T, Keys>>
     & {
         [K in Keys]-?: Required<Pick<T, K>> & Partial<Pick<T, Exclude<Keys, K>>>
     }[Keys]
