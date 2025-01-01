@@ -1,12 +1,16 @@
 {
     "$schema": "https://json.schemastore.org/tsconfig",
-
     "compilerOptions": {
         "target": "ES2020",
-        "module": "ESNext",
+        "module": "NodeNext",
         "moduleResolution": "nodenext",
-        "lib": ["webworker", "ES2020", "ES2021", "DOM", "DOM.Iterable"],
-
+        "lib": [
+            "webworker",
+            "ES2020",
+            "ES2021",
+            "DOM",
+            "DOM.Iterable"
+        ],
         "strict": true,
         "noImplicitAny": true,
         "strictFunctionTypes": true,
@@ -16,22 +20,21 @@
         "noImplicitThis": true,
         "alwaysStrict": true,
         "allowJs": true,
-
         "noImplicitReturns": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,
-
         "declaration": true,
         "emitDeclarationOnly": true,
         "skipLibCheck": true,
-
         "forceConsistentCasingInFileNames": true,
-        "allowSyntheticDefaultImports": true,
-
-        "outDir": "./dist",
-        "rootDir": "./src"
+        "allowSyntheticDefaultImports": true
     },
-    "include": ["src/**/*"],
-    "exclude": ["node_modules"]
+    "include": [
+        "lib/**/*",
+        "bin/**/*"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
 }
