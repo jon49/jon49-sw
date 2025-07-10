@@ -1,3 +1,6 @@
+import { SwResponse } from "./sw-framework.js"
+import { isHtml } from "./utils.js"
+
 let { links, globalDb } =
     // @ts-ignore
     self.app as { links: { file: string, url: string }[], html: Function, db: any, globalDb: any }
@@ -29,48 +32,18 @@ interface ResponseOptions {
 
 export let options: ResponseOptions = {}
 
-// Test if value is Async Generator
-let isHtml = (value: any) =>
-    value?.next instanceof Function
-    && value.throw instanceof Function
-
 // @ts-ignore
-export async function getResponse(event: FetchEvent): Promise<Response> {
+export async function useRoutes(req: Request, res: SwResponse, ctx: any): Promise<void> {
     try {
-        const req: Request = event.request
         const url = normalizeUrl(req.url)
-        return (
-            !url.pathname.startsWith("/web/")
-                ? fetch(req)
-                : executeHandler({ url, req, event }))
+        if (!url.pathname.startsWith("/web/")) {
+            res.response = await fetch(req)
+        } else {
+            Object.assign(res, await executeHandler({ url, req, ctx }))
+        }
     } catch (error) {
         console.error("Get Response Error", error)
-        return new Response("Oops something happened which shouldn't have!")
-    }
-}
-
-function getErrors(errors: any): string[] {
-    return typeof errors === "string"
-        ? [errors]
-        : call(options.handleErrors, errors) ?? []
-}
-
-function isHtmf(req: Request) {
-    return req.headers.has("HF-Request")
-}
-
-function htmfHeader(req: Request, events: any = {}, messages: string[] = [])
-    : Record<string, string> {
-    if (!isHtmf(req)) return {}
-    let userMessages =
-        messages?.length > 0
-            ? { "user-messages": messages }
-            : null
-    return {
-        "hf-events": JSON.stringify({
-            ...userMessages,
-            ...(events || {})
-        }) ?? "{}"
+        res.error = "Oops something happened which shouldn't have!"
     }
 }
 
@@ -139,15 +112,14 @@ export async function findRoute(url: URL, method: unknown) {
 interface ExectuteHandlerOptions {
     url: URL
     req: Request
-    // @ts-ignore
-    event: FetchEvent
+    ctx: any
 }
-async function executeHandler({ url, req, event }: ExectuteHandlerOptions): Promise<Response> {
+async function executeHandler({ url, req, ctx }: ExectuteHandlerOptions): Promise<SwResponse> {
     let method = req.method.toLowerCase()
     let isPost = method === "post"
     if (!isPost) {
         if (!url.pathname.endsWith("/")) {
-            return cacheResponse(url.pathname, event)
+            return { response: await cacheResponse(url.pathname, req) }
         }
 
         if (url.searchParams.get("login") === "success") {
@@ -175,19 +147,12 @@ async function executeHandler({ url, req, event }: ExectuteHandlerOptions): Prom
 
             if (!result) {
                 return isPost
-                    ? redirect(req)
-                    : new Response("Not Found!", { status: 404 })
+                    ? { response: redirect(req) }
+                    : { error: "Not found!" }
             }
 
             if (isPost && result.message == null) {
                 messages.push("Saved!")
-            }
-
-            if (isHtml(result)) {
-                return streamResponse({
-                    body: result,
-                    headers: htmfHeader(req, null, messages)
-                })
             }
 
             if (result.message?.length > 0) {
@@ -195,51 +160,44 @@ async function executeHandler({ url, req, event }: ExectuteHandlerOptions): Prom
             } else if (result.messages?.length > 0) {
                 messages.push(...result.messages)
             }
+            ctx.messages = messages
+            ctx.events = result.events
 
-            result.headers = {
-                ...htmfHeader(req, result.events, messages),
-                ...result.headers
+            if (isHtml(result)) {
+                return {
+                    body: result,
+                }
             }
 
             if (isHtml(result.body)) {
-                return streamResponse(result)
+                return { 
+                    ...result,
+                    type: "text/html",
+                }
             } else {
                 if ("json" in result) {
                     result.body = JSON.stringify(result.json)
                     result.headers = {
                         ...result.headers,
-                        "content-type": "application/json"
                     }
                 }
-                return new Response(result.body, {
-                    status: result.status ?? 200,
-                    headers: result.headers
-                })
+                return {
+                    ...result,
+                    type: "application/json"
+                }
             }
 
         } catch (error) {
             console.error(`"${method}" error:`, error, "\nURL:", url);
-            if (!isHtmf(req)) {
-                if (isPost) {
-                    return redirect(req)
-                } else {
-                    return new Response("Not Found!", { status: 404 })
-                }
+            if (isPost) {
+                return { error: "An error occurred while processing your request." }
             } else {
-                let errors: string[] = getErrors(error)
-                let headers = htmfHeader(req, {}, errors)
-                return new Response(null, {
-                    status: isPost ? 400 : 500,
-                    headers
-                })
+                return { error: "Not found!" }
             }
         }
     }
 
-    return new Response(null, {
-        status: 404,
-        headers: htmfHeader(req, {}, ["Not Found!"])
-    })
+    return { error: "Not Found!" }
 }
 
 async function getData(req: Request) {
@@ -264,46 +222,6 @@ async function getData(req: Request) {
     return o
 }
 
-async function cacheResponse(url: string, event?: { request: string | Request } | undefined): Promise<Response> {
-    url = links?.find(x => x.url === url)?.file || url
-    const match = await caches.match(url)
-    if (match) return match
-    const res = await fetch(event?.request || url)
-    if (!res || res.status !== 200 || res.type !== "basic") return res
-    const responseToCache = res.clone()
-    // @ts-ignore
-    let version: string = self.app?.version
-        ?? (console.warn("The version number is not available, expected glboal value `self.app.version`."), "")
-    const cache = await caches.open(version)
-    cache.put(url, responseToCache)
-    return res
-}
-
-const encoder = new TextEncoder()
-function streamResponse(response: { body: Generator, headers?: any }): Response {
-    let { body, headers } = response
-    const stream = new ReadableStream({
-        async start(controller: ReadableStreamDefaultController<any>) {
-            try {
-                for await (let x of body) {
-                    if (typeof x === "string")
-                        controller.enqueue(encoder.encode(x))
-                }
-                controller.close()
-            } catch (error) {
-                console.error(error)
-            }
-        }
-    })
-
-    return new Response(stream, {
-        headers: {
-            "content-type": "text/html; charset=utf-8",
-            ...headers,
-        }
-    })
-}
-
 /**
 *  /my/url -> /my/url/
 *  /my/script.js -> /my/script.js
@@ -317,6 +235,21 @@ function normalizeUrl(url: string): URL {
 
 function isFile(s: string) {
     return s.lastIndexOf("/") < s.lastIndexOf(".")
+}
+
+async function cacheResponse(url: string, req?: Request | undefined): Promise<Response> {
+    url = links?.find(x => x.url === url)?.file || url
+    const match = await caches.match(url)
+    if (match) return match
+    const res = await fetch(req || url)
+    if (!res || res.status !== 200 || res.type !== "basic") return res
+    const responseToCache = res.clone()
+    // @ts-ignore
+    let version: string = self.app?.version
+        ?? (console.warn("The version number is not available, expected glboal value `self.app.version`."), "")
+    const cache = await caches.open(version)
+    cache.put(url, responseToCache)
+    return res
 }
 
 export interface RouteGetArgs {

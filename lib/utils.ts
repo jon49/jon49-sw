@@ -24,3 +24,9 @@ export class DbCache {
     }
 }
 
+// Test if value is Async Generator
+export function isHtml(value: any) {
+    return value?.next instanceof Function
+        && value.throw instanceof Function
+}
+
