@@ -20,7 +20,7 @@ navigator.serviceWorker.addEventListener('controllerchange', function () {
 ///         worker.postMessage("skipWaiting")
 ///     }
 /// })
-export function notifier(fn: (state: "" | "waiting", worker: ServiceWorker) => void) {
+function notifier(fn: (state: "" | "waiting", worker: ServiceWorker) => void) {
     let newWorker: ServiceWorker | undefined | null
 
     if ('serviceWorker' in navigator) {
@@ -49,3 +49,18 @@ export function notifier(fn: (state: "" | "waiting", worker: ServiceWorker) => v
     }
 }
 
+notifier(notifyUserAboutNewVersion)
+
+function notifyUserAboutNewVersion(state = "", worker: ServiceWorker) {
+    let nav = document.getElementById("sw-message")
+    nav?.insertAdjacentHTML("afterbegin", `<div class=inline><a traits=skip-waiting href="#">Click here to update your app.</a></div>`)
+    // @ts-ignore
+    window.app = window.app || {}
+    // @ts-ignore
+    window.app.sw = worker
+    if (state === "waiting") return
+    // Publish custom event for "user-messages" to display a toast.
+    document.dispatchEvent(new CustomEvent("user-messages", {
+        detail: { html: `A new version of the app is available. <a traits=skip-waiting href="#">Click to update the app.</a>` }
+    }))
+}
