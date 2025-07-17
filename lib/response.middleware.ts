@@ -57,4 +57,15 @@ export function useResponse(_: Request, res: any, __: any) : void {
             })
         })
     }
+
+    if (res.status) {
+        res.response = new Response(res.body, {
+            status: res.status,
+            headers: res.headers || {}
+        })
+    } else {
+        res.response = new Response(res.body || "", {
+            headers: res.headers || {}
+        })
+    }
 }
