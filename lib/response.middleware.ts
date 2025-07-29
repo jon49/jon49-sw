@@ -51,11 +51,11 @@ export function useResponse(_: Request, res: any, __: any) : void {
             response: new Response(res.body, {
                 status: res.status || 200,
                 headers: {
-                    "content-type": res.type || "text/plain; charset=utf-8",
-                    ...res.headers,
+                    "Content-Type": res.type || "text/plain; charset=utf-8",
                 }
             })
         })
+        return
     }
 
     if (res.status) {
