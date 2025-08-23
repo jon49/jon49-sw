@@ -10,9 +10,10 @@ function streamResponse(response: { body: Generator, headers?: any }): Response 
                     if (typeof x === "string")
                         controller.enqueue(encoder.encode(x))
                 }
-                controller.close()
             } catch (error) {
                 console.error(error)
+            } finally {
+                controller.close()
             }
         }
     })
