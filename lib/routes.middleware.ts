@@ -160,7 +160,7 @@ async function executeHandler({ url, req, ctx }: ExectuteHandlerOptions): Promis
             } else if (result.messages?.length > 0) {
                 messages.push(...result.messages)
             }
-            ctx.messages = messages
+            ctx.messages = result.messages = messages
             ctx.events = result.events
 
             if (isHtml(result)) {
@@ -180,13 +180,17 @@ async function executeHandler({ url, req, ctx }: ExectuteHandlerOptions): Promis
                     result.headers = {
                         ...result.headers,
                     }
+                } else if (result.messages?.length > 0) {
+                    return {
+                        ...result,
+                        status: result.status || 204,
+                    }
                 }
                 return {
                     ...result,
                     type: "application/json"
                 }
             }
-
         } catch (error) {
             console.error(`"${method}" error:`, error, "\nURL:", url);
             if (isPost) {
@@ -306,4 +310,3 @@ type RequireAtLeastOne<T, Keys extends keyof T = keyof T> =
 
 export type Route = RequireAtLeastOne<Route_, "file" | "get" | "post">
 export type RoutePage = Pick<Route_, "get" | "post">
-
