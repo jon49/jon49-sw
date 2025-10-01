@@ -138,12 +138,25 @@ async function executeHandler({ url, req, ctx }: ExectuteHandlerOptions): Promis
             const data = await getData(req)
             let query = searchParams<{ handler?: string }>(url)
             let args = { req, data, query }
-            let result = await (
-                handlers instanceof Function
-                    ? handlers(args)
-                    : (call(handlers[query.handler ?? ""], args)
-                        || call(handlers[method], args)
-                        || Promise.reject("I'm sorry, I didn't understand where to route your request.")))
+            let result
+            try {
+                result = await (
+                    handlers instanceof Function
+                        ? handlers(args)
+                        : (call(handlers[query.handler ?? ""], args)
+                            || call(handlers[method], args)
+                            || Promise.reject("I'm sorry, I didn't understand where to route your request.")))
+            } catch (e: any) {
+                if (e.reasons) {
+                    ctx.messages =
+                        e.reasons.map((x: any) => x.reason.reasons).flat().map((x: any) => x.reason).flat()
+                    return {
+                        status: 204,
+                    }
+                } else {
+                    throw e
+                }
+            }
 
             if (!result) {
                 return isPost
