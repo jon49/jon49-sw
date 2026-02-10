@@ -28,7 +28,8 @@
         "emitDeclarationOnly": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "allowSyntheticDefaultImports": true
+        "allowSyntheticDefaultImports": true,
+        "allowImportingTsExtensions": true
     },
     "include": [
         "lib/**/*",
