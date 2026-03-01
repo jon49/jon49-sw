@@ -1,4 +1,5 @@
 // https://deanhume.com/displaying-a-new-version-available-progressive-web-app/
+const isDev = ["localhost", "127.0.0.1"].includes(document.location.hostname)
 let refreshing = false
 // The event listener that is fired when the service worker updates
 // Here we reload the page
@@ -12,15 +13,13 @@ navigator.serviceWorker.addEventListener('controllerchange', function () {
 /// @param fn - Callback function to be called when a new version is available
 /// @returns void
 /// @example
-/// notifier((state, worker) => {
-///   if (state !== "waiting") {
-///     // Show notification
-///   }
+/// notifier((worker) => {
+///   // Show notification to user about new version
 ///   if (/* user confirms update */) {
 ///     worker.postMessage("skipWaiting")
 ///   }
 /// })
-function notifier(fn: (state: "" | "waiting", worker: ServiceWorker) => void) {
+function notifier(fn: (worker: ServiceWorker) => void) {
   let newWorker: ServiceWorker | undefined | null
 
   if ('serviceWorker' in navigator) {
@@ -28,7 +27,7 @@ function notifier(fn: (state: "" | "waiting", worker: ServiceWorker) => void) {
     navigator.serviceWorker.register('/web/sw.js').then(reg => {
       if ((newWorker = reg.waiting)?.state === 'installed') {
         // @ts-ignore
-        fn("waiting", newWorker)
+        fn(newWorker)
         return
       }
       reg.addEventListener('updatefound', () => {
@@ -37,11 +36,19 @@ function notifier(fn: (state: "" | "waiting", worker: ServiceWorker) => void) {
 
         newWorker?.addEventListener('statechange', () => {
 
-          // There is a new service worker available, show the notification
-          if (newWorker?.state === "installed" && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage("installed")
-            fn("", newWorker)
-          }
+            // There is a new service worker available, show the notification
+            if (newWorker?.state === "installed" && navigator.serviceWorker.controller) {
+              navigator.serviceWorker.controller.postMessage("installed")
+              // If we're in dev/server auto-activate the new worker
+              if (isDev) {
+                try {
+                  newWorker.postMessage({ action: 'skipWaiting' })
+                } catch (err) {
+                  // Ignore if worker doesn't accept messages
+                }
+              }
+              fn(newWorker)
+            }
 
         })
       })
@@ -60,7 +67,7 @@ function skipWaiting(id: string) {
   })
 }
 
-function notifyUserAboutNewVersion(state = "", worker: ServiceWorker) {
+function notifyUserAboutNewVersion(worker: ServiceWorker) {
   let nav = document.getElementById("sw-message")
   nav?.insertAdjacentHTML("afterbegin", `<div class=inline><a id=skipWaiting href="#">Click here to update your app.</a></div>`)
   // @ts-ignore
@@ -69,11 +76,4 @@ function notifyUserAboutNewVersion(state = "", worker: ServiceWorker) {
   window.app = window.app || {}
   // @ts-ignore
   window.app.sw = worker
-  if (state === "waiting") return
-  // Publish custom event for "user-messages" to display a toast.
-  document.dispatchEvent(new CustomEvent("user-messages", {
-    detail: { html: `A new version of the app is available. <a id=skipWaiting1 href="#">Click to update the app.</a>` }
-  }))
-  // @ts-ignore
-  skipWaiting("skipWaiting1")
 }
