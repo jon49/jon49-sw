@@ -59,7 +59,7 @@ export async function fileMapper(targetDirectory: string, force = false) {
 
     fileMapJsonContent = `${fileMapJsonContent.slice(0, -1)},{"url":"/web/file-map.js","file":"${fileMapUrl}"}]`
 
-    let fileMapContent = `(() => { self.app = { links: ${fileMapJsonContent} } })()`
+    let fileMapContent = `(() => { self.sw = { links: ${fileMapJsonContent} } })()`
     await write(`${targetDirectory}${fileMapUrl}`, fileMapContent)
 
     let globalFiles =

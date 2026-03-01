@@ -3,10 +3,10 @@ import { isHtml } from "./utils.js"
 
 let { links, globalDb } =
     // @ts-ignore
-    self.app as { links: { file: string, url: string }[], html: Function, db: any, globalDb: any }
+    self.sw as { links: { file: string, url: string }[], html: Function, db: any, globalDb: any }
 
 if (!links) {
-    console.error("Expecting links defined with `self.app.links`, but found none.")
+    console.error("Expecting links defined with `self.sw.links`, but found none.")
 }
 
 function redirect(req: Request) {
@@ -66,12 +66,12 @@ export async function findRoute(url: URL, method: unknown) {
     let validMethod: MethodTypes = isMethod(method)
     if (validMethod) {
         // @ts-ignore
-        if (!self.app?.routes) {
-            console.error("Expecting routes defined with `self.app.routes`, but found none.")
+        if (!self.sw?.routes) {
+            console.error("Expecting routes defined with `self.sw.routes`, but found none.")
             return null
         }
         // @ts-ignore
-        for (const r of self.app.routes) {
+        for (const r of self.sw.routes) {
             // @ts-ignore
             if (r.file
                 && (r.route instanceof RegExp && r.route.test(url.pathname)
@@ -262,8 +262,8 @@ async function cacheResponse(url: string, req?: Request | undefined): Promise<Re
     if (!res || res.status !== 200 || res.type !== "basic") return res
     const responseToCache = res.clone()
     // @ts-ignore
-    let version: string = self.app?.version
-        ?? (console.warn("The version number is not available, expected glboal value `self.app.version`."), "")
+    let version: string = self.sw?.version
+        ?? (console.warn("The version number is not available, expected glboal value `self.sw.version`."), "")
     const cache = await caches.open(version)
     cache.put(url, responseToCache)
     return res
