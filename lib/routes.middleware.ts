@@ -290,14 +290,20 @@ export interface RouteObjectReturn {
     json?: any
 }
 
-export interface RouteHandler<T> {
+export type RouteHandler<T> = {
     (options: T): Promise<
         AsyncGenerator
         | Response
         | RouteObjectReturn
         | undefined
         | null
-        | void>
+        | void> | (
+        AsyncGenerator
+        | Response
+        | RouteObjectReturn
+        | undefined
+        | null
+        | void)
 }
 
 export interface RoutePostHandler {
