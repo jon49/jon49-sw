@@ -25,7 +25,7 @@ async function setPagesToReturn(targetDirectory: string) {
     await Promise.all(files.map(async (file: string) => {
         let filename = path.join(targetDirectory, file)
         let content = await readFile(filename, "utf-8")
-        let matched = content.match(/,(\w*)=(\w*);export/)
+        let matched = content.match(/,(\w*)=([\w|\$]*);export/)
         if (matched) {
             let [, name, value] = matched
             content = content.replace(`,${name}=${value}`, "")
