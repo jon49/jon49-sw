@@ -147,9 +147,8 @@ async function executeHandler({ url, req, ctx }: ExectuteHandlerOptions): Promis
                             || call(handlers[method], args)
                             || Promise.reject("I'm sorry, I didn't understand where to route your request.")))
             } catch (e: any) {
-                if (e.reasons) {
-                    ctx.messages =
-                        e.reasons.map((x: any) => x.reason.reasons).flat().map((x: any) => x.reason).flat()
+                if (Array.isArray(e)) {
+                    ctx.messages = e
                     return {
                         status: 204,
                     }
