@@ -150,6 +150,9 @@ async function executeHandler({ url, req, ctx }: ExectuteHandlerOptions): Promis
         if (typeof e === "string") {
           e = [e]
         }
+        if ("message" in e) {
+          e = [e.message]
+        }
         if (Array.isArray(e)) {
           ctx.messages = e
           return {
