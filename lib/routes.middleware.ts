@@ -26,12 +26,6 @@ function searchParams<TReturn>(url: URL): TReturn & { _url: URL } {
   return new Proxy(url, searchParamsHandler)
 }
 
-interface ResponseOptions {
-  handleErrors?: Function
-}
-
-export let options: ResponseOptions = {}
-
 // @ts-ignore
 export async function useRoutes(req: Request, res: SwResponse, ctx: any): Promise<void> {
   try {
