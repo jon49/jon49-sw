@@ -148,7 +148,7 @@ async function executeHandler({ url, req, ctx }: ExectuteHandlerOptions): Promis
           e = [e.message]
         }
         if (Array.isArray(e)) {
-          ctx.messages = e
+          ctx.messages = e.map((x: any) => "message" in x ? x.message : String(x))
           return {
             status: 204,
           }
