@@ -200,7 +200,7 @@ async function executeHandler({ url, req, ctx }: ExectuteHandlerOptions): Promis
         }
         return {
           ...result,
-          type: "application/json"
+          type: result.type || "application/json"
         }
       }
     } catch (error) {
