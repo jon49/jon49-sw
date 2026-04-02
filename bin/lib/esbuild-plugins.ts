@@ -34,10 +34,15 @@ async function setPagesToReturn(targetDirectory: string) {
                 `return ${value}`)
         } else {
             let matched = content.match(/var (\w*) = (\w*);\sexport \{\s.*\s.*/)
-            if (!matched) {
-                return
+            if (matched) {
+                content = content.replace(matched[0], `return ${matched[2]};`)
+            } else {
+                let matched = content.match(/export\{(\w+|\$\w+) as default\}/)
+                if (!matched) {
+                    return
+                }
+                content = content.replace(matched[0], `return ${matched[1]}`)
             }
-            content = content.replace(matched[0], `return ${matched[2]};`)
         }
         await writeFile(filename, content, 'utf-8')
     }))
