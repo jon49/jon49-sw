@@ -1,9 +1,13 @@
 import { SwResponse } from "./sw-framework.js"
 import { isHtml } from "./utils.js"
 
+// Defensive: if importScripts for file-map.*.js failed, self.sw will be
+// undefined and a bare destructure here throws at module load time, bricking
+// the worker before any fetch handler can register and recover. Default to
+// empty so the worker installs cleanly and surfaces a console error instead.
 let { links, globalDb } =
   // @ts-ignore
-  self.sw as { links: { file: string, url: string }[], html: Function, db: any, globalDb: any }
+  (self.sw ?? {}) as { links: { file: string, url: string }[], html: Function, db: any, globalDb: any }
 
 if (!links) {
   console.error("Expecting links defined with `self.sw.links`, but found none.")
@@ -78,7 +82,7 @@ export async function findRoute(url: URL, method: unknown) {
         }
         if (!cache.has(file)) {
           let cachedResponse = await cacheResponse(file)
-          if (!cacheResponse) {
+          if (!cachedResponse) {
             console.error(`"${file}" not found in cache!`)
             return null
           }

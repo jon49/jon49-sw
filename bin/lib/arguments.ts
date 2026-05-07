@@ -17,6 +17,25 @@ export class Arguments {
     get targetDirectory() {
         return this.argv.t || this.argv.target || "./public"
     }
+    /**
+     * Reverse-proxy mappings of the form `<path-prefix>=<upstream>`, e.g.
+     * `--proxy=/api=http://localhost:4000`. May be passed multiple times.
+     * Returns [{ prefix, target }] pairs.
+     */
+    get proxies(): { prefix: string, target: string }[] {
+        let raw = this.argv.proxy
+        if (raw == null) return []
+        let list = Array.isArray(raw) ? raw : [raw]
+        return list
+            .map(s => String(s))
+            .map(s => {
+                let i = s.indexOf("=")
+                if (i < 0) {
+                    throw new Error(`--proxy must be <prefix>=<upstream>, got "${s}"`)
+                }
+                return { prefix: s.slice(0, i), target: s.slice(i + 1) }
+            })
+    }
     get help() {
         return this.argv.h || this.argv.help
     }
@@ -42,6 +61,8 @@ export interface Argv {
     // Target directory
     t: string
     target: string
+    // Proxy: repeatable "<prefix>=<upstream>"
+    proxy?: string | string[]
     // Help
     h: boolean
     help: boolean
