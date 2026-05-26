@@ -53,6 +53,7 @@ export function useResponse(_: Request, res: any, __: any) : void {
                 status: res.status || 200,
                 headers: {
                     "Content-Type": res.type || "text/plain; charset=utf-8",
+                    ...res.headers,
                 }
             })
         })
