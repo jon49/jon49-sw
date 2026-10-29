@@ -36,7 +36,7 @@ export async function glob(globString: string, targetDirectory: string) {
 export async function findHashedFile(
     filename: string,
     ext: string,
-    targetDirectory: string) {
+    targetDirectory: string): Promise<string | undefined> {
 
     let parsed = path.parse(filename)
     for await (const file of Glob(`**/${parsed.dir}/${parsed.name}.*${ext}`, { cwd: targetDirectory })) {
@@ -44,6 +44,7 @@ export async function findHashedFile(
             return file
         }
     }
+    return undefined
 }
 
 export function getHash(content: string) {
