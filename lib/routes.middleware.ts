@@ -148,11 +148,11 @@ async function executeHandler({ url, req, ctx }: ExectuteHandlerOptions): Promis
         if (typeof e === "string") {
           e = [e]
         }
-        if ("message" in e) {
+        if (hasMessage(e)) {
           e = [e.message]
         }
         if (Array.isArray(e)) {
-          ctx.messages = e.map((x: any) => "message" in x ? x.message : String(x))
+          ctx.messages = e.map((x: any) => hasMessage(x) ? x.message : String(x))
           return {
             status: 204,
           }
@@ -270,6 +270,11 @@ async function cacheResponse(url: string, req?: Request | undefined): Promise<Re
   const cache = await caches.open(version)
   cache.put(url, responseToCache)
   return res
+}
+
+// `in` throws on strings and other primitives, which most handler errors are.
+function hasMessage(x: unknown): x is { message: unknown } {
+  return x != null && typeof x === "object" && "message" in x
 }
 
 export interface RouteGetArgs {
